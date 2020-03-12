@@ -1,0 +1,83 @@
+#combining projects and logs together to filter out unfinished sprints.
+
+---
+title: "projects_extractor"
+output: html_document
+---
+
+Filtering blank sprints
+```{r}
+library(dplyr)
+library(sqldf)
+library(stringr)
+library(tidyr)
+issues_copy_1 <- issues
+
+#Filtering projects with blank sprints
+filtered_issues_table <- issues_copy_1 %>% select(key, fields.status.name,fields.assignee.name, fields.updated, storypoints, project, sprint)
+filtered_issues_table = filtered_issues_table[!(filtered_issues_table$sprint ==""), ]
+filtered_issues_table = filtered_issues_table[order(filtered_issues_table$project, filtered_issues_table$sprint, decreasing=TRUE),]
+```
+
+```{r}
+issuesXD <- sqldf("select * from filtered_issues_table where project = 'xd' group by key")
+changelogXD <- sqldf("select created, field, key, project, toString from changelog where project = 'xd' and field = 'status'")
+changelogXD <- sqldf("select * from changelogXD where toString = 'Done' ")
+completedXD <- (sqldf("select * from issuesXD left join changelogXD on issuesXD.key=changelogXd.key "))
+```
+
+```{r}
+issuesNEXUS <- sqldf("select * from filtered_issues_table where project = 'nexus' group by key")
+changelogNEXUS <- sqldf("select created, field, key, project, toString from changelog where project = 'nexus' and field = 'status'")
+changelogNEXUS <- sqldf("select * from changelogNEXUS where toString = 'Closed' group by key")
+completedNEXUS <- (sqldf("select DISTINCT * from issuesNEXUS left join changelogNEXUS on issuesNEXUS.key=changelogNEXUS.key"))
+```
+
+```{r}
+issuesAPSTUD <- sqldf("select * from filtered_issues_table where project = 'apstud' group by key")
+changelogAPSTUD <- sqldf("select created, field, key, project, toString from changelog where project = 'apstud' and field = 'status'")
+changelogAPSTUD <- sqldf("select * from changelogAPSTUD where toString = 'Closed' ")
+completedAPSTUD <- (sqldf("select * from issuesAPSTUD left join changelogAPSTUD on issuesAPSTUD.key=changelogAPSTUD.key "))
+```
+
+```{r}
+issuesTISTUD <- sqldf("select * from filtered_issues_table where project = 'tistud' group by key")
+changelogTISTUD <- sqldf("select created, field, key, project, toString from changelog where project = 'tistud' and field = 'status'")
+changelogTISTUD <- sqldf("select * from changelogTISTUD where toString = 'Closed'")
+completedTISTUD <-  (sqldf("select * from issuesTISTUD left join changelogTISTUD on issuesTISTUD.key=changelogTISTUD.key "))
+```
+
+
+RESOLVED USED IN MESOS
+```{r}
+issuesMESOS <- sqldf("select * from filtered_issues_table where project = 'mesos' group by key")
+changelogMESOS <- sqldf("select created, field, key, project, toString from changelog where project = 'mesos' and field = 'status'")
+changelogMESOS <- sqldf("select * from changelogMESOS where toString = 'Resolved' ")
+completedMESOS <- (sqldf("select * from issuesMESOS left join changelogMESOS on issuesMESOS.key=changelogMESOS.key "))
+
+```
+
+```{r}
+issuesDNN <- sqldf("select * from filtered_issues_table where project = 'dnn' group by key")
+changelogDNN <- sqldf("select created, field, key, project, toString from changelog where project = 'dnn' and field = 'status'")
+changelogDNN <- sqldf("select * from changelogDNN where toString = 'Closed' ")
+completedDNN <- (sqldf("select * from issuesDNN left join changelogDNN on issuesDNN.key=changelogDNN.key "))
+```
+
+```{r}
+issuesTIMOB <- sqldf("select * from filtered_issues_table where project = 'timob' group by key")
+changelogTIMOB <- sqldf("select created, field, key, project, toString from changelog where project = 'timob' and field = 'status'")
+changelogTIMOB <- sqldf("select * from changelogTIMOB where toString = 'Closed' or toString = 'Resolved' group by key")
+completedTIMOB <- (sqldf("select * from issuesTIMOB left join changelogTIMOB on issuesTIMOB.key=changelogTIMOB.key"))
+```
+
+
+Cleaning date update field
+```{r}
+
+  completedTIMOB$created <- substr(completedTIMOB$created, 0, 10)
+
+```
+
+
+

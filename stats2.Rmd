@@ -1,0 +1,58 @@
+nexus <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_nexus.csv")
+xd <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_xd.csv")
+apstud <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_apstud.csv")
+tistud <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_tistud.csv")
+dnn3 <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_dnn3.csv")
+mesos2 <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_mesos2.csv")
+dnn1 <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_dnn1.csv")
+mesos1 <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_mesos1.csv")
+dnn4 <- read.csv("C:/Users/Khaled/Documents/thesis/ds/jiradataset2/newData/metrics/metricsFinal/metrics_dnn4.csv")
+
+
+
+library(dplyr)
+library(sqldf)
+
+developers <- function(x){
+  total <- sum(x)
+  minimum <- min(x)
+  maximum <- max(x)
+  avg <- mean(x)
+  standardDev <- sd(x)
+  return (sprintf("sum is %f ... min is %f .....max is %f .... avg is %f ..... std is %f ....",total, minimum, maximum, avg, standardDev))
+  
+  
+}
+
+hyper <- function(x){
+  minimum <- min(x)
+  maximum <- max(x)
+  avg <- mean(x)
+  standardDev <- sd(x)
+  return (sprintf(" min is %f .....max is %f .... avg is %f ..... std is %f ....", minimum, maximum, avg, standardDev))
+  
+  
+}
+xd <- na.omit(xd)
+
+hyper(nexus$hyper)
+hyper(xd$hyper)
+hyper(apstud$Hyperproductivity)
+hyper(tistud$TISTUD)
+hyper(dnn3$hyper)
+hyper(mesos2$hyper)
+hyper(dnn1$Hyperproductivity)
+hyper(mesos1$hyper)
+hyper(dnn4$hyper)
+
+
+developers(nexus$Number.of.Devs)
+developers(xd$Number.of.Devs)
+developers(apstud$Number.of.Devs)
+developers(tistud$Number.of.Devs)
+developers(dnn3$Number.of.Devs)
+developers(mesos2$Number.of.Devs)
+developers(dnn1$Number.of.Devs)
+developers(mesos1$Number.of.Devs)
+developers(dnn4$Number.of.Devs)
+

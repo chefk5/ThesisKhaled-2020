@@ -1,0 +1,235 @@
+#metrics calculations have been done here.
+
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r}
+sprints = sqldf("select DISTINCT sprint from completedTIMOB")
+sprints_vector <- unlist(sprints, use.names=TRUE)
+
+values_list <- list()
+k=1
+
+#for loop to filter project
+    for (i in 1:length(sprints_vector)) {
+       #get specific sprint
+       issuesInSprint <-completedTIMOB[completedTIMOB$sprint == sprints_vector[i],]
+       #sum of story points of each sprint
+       #sum1 <- sum(try2$storypoints)
+       sumOfStoryPointsInSprint <- sum(issuesInSprint$storypoints)
+       closedIssues <- issuesInSprint[issueInSprint$toString=="Closed",]
+       velocity <- sum(closedIssues$storypoints)
+       #issuesInSprint[issuesInSprint$fields.assignee.name=="",] <- NA
+       #issuesInSprint <-  na.omit(issuesInSprint)
+       numberOfDevelopersInSprint <-length(unique(issuesInSprint[["fields.assignee.name"]]))
+       developersInCurrentSprint <-paste(unique(issuesInSprint[["fields.assignee.name"]]), collapse = " ")
+       line <- paste(sprints_vector[i], velocity, sumOfStoryPointsInSprint, numberOfDevelopersInSprint,developersInCurrentSprint, sep = " ___ ")
+       #add it to a list
+       values_list[[k]] <- line
+       k=k+1
+    }
+
+sprints_table <- data.frame(matrix(unlist(values_list), byrow=T))
+sprintsWithDevsTIMOB <- separate(sprints_table, col = matrix.unlist.values_list...byrow...T., into = c("sprint", "velocity","work capacity",  "Number of Devs", "devs names"), sep = " ___ ")
+
+# sprints_test <- sprints_all %>% select(project,sprint.id, sprint.name)
+# sprints_test <- unique(sprints_test[sprints_test$project=="mesos",])
+# colnames(sprints_test) <- c("project", "id","sprint")
+# sprintsWithDevsMESOS <- sqldf("SELECT * 
+#               FROM sprints_test
+#               JOIN sprintsWithDevsMESOS USING(sprint)")
+# sprintsWithDevsMESOS <- arrange(sprintsWithDevsMESOS, id)
+#write.csv(sprintsWithDevsMESOS, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsMESOS.csv")
+
+# 
+# df_mesos_p1 <- sprintsWithDevsMESOS [1:10,]
+# 
+# df_mesos_p2 <- sqldf("SELECT * 
+#                       FROM sprintsWithDevsMESOS
+#                       WHERE Sprint LIKE 'Twitter %'")
+# df_mesos_p2 <- arrange(df_mesos_p2, id)
+# 
+# df_mesos_1 <- rbind(df_mesos_p1,df_mesos_p2)
+# 
+# df_mesos_2 <- sqldf("SELECT * 
+#                       FROM sprintsWithDevsMESOS
+#                       WHERE Sprint LIKE 'Mesosphere %'")
+# df_mesos_2 <- arrange(df_mesos_2, id)
+# write.csv(df_mesos_1, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsMESOS1.csv")
+# write.csv(df_mesos_2, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsMESOS2.csv")
+
+# df_dnn_p1 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE '7%' ")
+# 
+# df_dnn_p1a <- df_dnn_p1[21:21,]
+# 
+# df_dnn_p1 <-  df_dnn_p1[-nrow(df_dnn_p1),]
+# 
+# 
+# df_dnn_p2 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE '8%' ")
+# 
+# df_dnn_p2_group1 <- rbind(df_dnn_p1, df_dnn_p2)
+# 
+# df_dnn_p3 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE '2%' ")
+# 
+# df_dnn_p4 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE '3%' ")
+# 
+# df_dnn_p2_group2 <- rbind(df_dnn_p3, df_dnn_p4)
+# 
+# df_dnn_p2_group3 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE 'Content%' ")
+# 
+# df_dnn_p2_group4 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE 'Platform%' ")
+# 
+# df_dnn_p2_group4 <- rbind(df_dnn_p1a,df_dnn_p2_group4)
+# 
+# df_dnn_p2_group5 <- sqldf("SELECT *
+#                       FROM sprintsWithDevsDNN
+#                       WHERE Sprint LIKE 'Engage%' ")
+# 
+# write.csv(df_dnn_p2_group1, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsDNN1.csv")
+# write.csv(df_dnn_p2_group2, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsDNN2.csv")
+# write.csv(df_dnn_p2_group3, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsDNN3.csv")
+# write.csv(df_dnn_p2_group4, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsDNN4.csv")
+# write.csv(df_dnn_p2_group5, file = "../jiradataset2/newData/metrics/nbrOfDevs/devsDNN5.csv")
+
+#create a table from dataframe
+# sprints_table <- data.frame(matrix(unlist(values_list), byrow=T))
+# sprints_table2 <- separate(sprints_table, col = matrix.unlist.values_list...byrow...T., into = c("project" ,"sprint", "work capacity", "Velocity", "Focus Factor"), sep = " ___ ")
+# #add to new table
+# final_table <- sprints_table2
+
+
+
+```
+
+devs variation
+```{r}
+k=1
+values_list <- list()
+#for loop to filter project
+devsVariation <- function(project){
+    for (i in 1:nrow(project)) {
+        if(i>1){
+          issuesInPreviousSprint <-project[i-1,]
+          issuesInSprint <- project[i,]
+          sprints1 <- toString(issuesInPreviousSprint$`devs names`)
+          sprints2 <- toString(issuesInSprint$`devs names`)
+          developersInPreviousSprint <-unlist(strsplit(sprints1, split = " "))
+          developersInCurrentSprint <-unlist(strsplit(sprints2, split = " "))
+          newDevs  <- length(setdiff(developersInCurrentSprint, intersect(developersInPreviousSprint, developersInCurrentSprint)))
+          line <- paste(i, newDevs, sep = " ___ ")
+        }
+       else{
+        newDevs <- 0
+        line <- paste(i, newDevs, sep = " ___ ")
+       }
+       
+       
+       #add it to a list
+       values_list[[k]] <- line
+       k=k+1
+    
+    }
+
+sprints_table <- data.frame(matrix(unlist(values_list), byrow=T))
+devsVarXD <- separate(sprints_table, col = matrix.unlist.values_list...byrow...T., into = c("sprint","New Devs"), sep = " ___ ")
+return(devsVarXD)
+}
+
+developersVariationXD <- devsVariation(sprintsWithDevsXD)
+developersVariationNEXUS <- devsVariation(sprintsWithDevsNEXUS)
+developersVariationTISTUD <- devsVariation(sprintsWithDevsTISTUD)
+developersVariationAPSTUD <- devsVariation(sprintsWithDevsAPSTUD)
+developersVariationMESOS1 <- devsVariation(df_mesos_1)
+developersVariationMESOS2 <- devsVariation(df_mesos_2)
+developersVariationDNN1 <- devsVariation(df_dnn_p2_group1)
+developersVariationDNN3 <- devsVariation(df_dnn_p2_group3)
+developersVariationDNN4 <- devsVariation(df_dnn_p2_group4)
+
+write.csv(developersVariationXD, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationXD.csv")
+write.csv(developersVariationNEXUS, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationNEXUS.csv")
+write.csv(developersVariationTISTUD, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationTISTUD.csv")
+write.csv(developersVariationAPSTUD, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationAPSTUD.csv")
+write.csv(developersVariationMESOS1, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationMESOS1.csv")
+write.csv(developersVariationMESOS2, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationMESOS2.csv")
+write.csv(developersVariationDNN1, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationDNN1.csv")
+write.csv(developersVariationDNN3, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationDNN3.csv")
+write.csv(developersVariationDNN4, file = "../jiradataset2/newData/metrics/nbrOfDevs/developersVariationDNN4.csv")
+
+
+
+
+
+```
+
+```{r}
+
+library("dplyr")
+  developersInPreviousSprint <-unlist(strsplit("a p c", split = " "))
+  developersInCurrentSprint <-unlist(strsplit("d ", split = " "))
+  newDevs <- length(setdiff(developersInCurrentSprint, intersect(developersInPreviousSprint, developersInCurrentSprint)))
+  newDevs
+```
+```{r}
+issuesInSprint$`devs names`
+```
+
+```{r}
+sprints = sqldf("select DISTINCT sprint from completedTIMOB")
+sprints_vector <- unlist(sprints, use.names=TRUE)
+sprints_all_timob <- sprints_all[sprints_all$project=="timob",]
+sprints_all_timob <- sprints_all_timob[-1,]
+values_list <- list()
+k=1
+
+
+    for (i in 1:length(sprints_vector)) {
+      if(sprints_vector[i] %in% sprints_all_timob$sprint.name){
+       tryDate <- sprints_all_timob[sprints_all_timob$sprint.name==sprints_vector[i],]
+       tryDate <- as.Date(tryDate$sprint.endDate[1])
+       print(paste(tryDate ," sprint ", sprints_vector[i]) )
+       try1 <- completedTIMOB[completedTIMOB$project=="nexus",]
+       try2 <- try1[try1$sprint == sprints_vector[i],]
+       sum1 <- sum(try2$storypoints)
+       try3 <- try2[try2$fields.status.name=="Done" | try2$fields.status.name=="Closed",]
+       try3 <- try3[as.Date(try3$created) <= tryDate,]
+       sum2 <- sum(try3$storypoints)
+       sum3 <- sum2/sum1
+       if (sum1 > 0 & sum2>0){
+       line <- paste( "nexus",sprints_vector[i], sum1, sum2, sum3, sep = " ___ ")
+       values_list[[k]] <- line
+       k=k+1
+       }
+      }
+    }
+sprints_table <- data.frame(matrix(unlist(values_list), byrow=T))
+sprints_table2 <- separate(sprints_table, col = matrix.unlist.values_list...byrow...T., into = c("project" ,"sprint", "work capacity", "Velocity", "Focus Factor"), sep = " ___ ")
+#final_table <- rbind(final_table, sprints_table2)
+
+
+```
+
+```{r}
+tryDate <- sprints_all_timob[sprints_all_nexus$sprint.name==sprints_vector[i],]
+      tryDate <- as.Date(tryDate$sprint.endDate[1])
+```
+
+```{r}
+sprints = sqldf("select DISTINCT sprint from completedTIMOB")
+sprints_vector <- unlist(sprints, use.names=TRUE)
+sprints_all_timob <- sprints_all[sprints_all$project=="timob",]
+```
+

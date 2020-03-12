@@ -1,0 +1,248 @@
+#script used for some investigation in the data. issue types were used here
+
+---
+title: "investigation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+dev_count <- function(project){
+number_of_devs<- (users[users$project==paste0(project),])
+number_of_devs <-  number_of_devs[!(is.na(number_of_devs$name) | number_of_devs$name==""), ]
+return (number_of_devs)
+}
+
+devs_xd <- dev_count("xd")
+devs_dnn <- dev_count("dnn")
+devs_mesos <- dev_count("mesos")
+devs_nexus <- dev_count("nexus")
+devs_apstud <- dev_count("apstud")
+devs_tistud <- dev_count("tistud")
+
+```
+
+```{r}
+xd_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_xd_df2_keys.csv")
+
+test1 <- changelog[changelog$key %in% xd_issues$XD.20,]
+
+authors <- unique(test1$author)
+
+assignees <- test1[test1$field == "assignee",]
+assignees <- unique(assignees$to)
+
+authors
+
+
+```
+
+```{r}
+library(sqldf)
+library(dplyr)
+library(stringr)
+library(tidyr)
+```
+
+```{r}
+xd_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_xd_df2_keys.csv")
+firstrow <- as.character(xd_issues[1,4])
+#firstrow
+test01 <- strsplit(firstrow, split = "\\s+")
+test01 <- unlist(test01)
+
+
+# xd_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_xd_df2_keys.csv")
+# sprints = sqldf("select sprint from xd_issues")
+# sprints_vector <- unlist(sprints, use.names=TRUE)
+# values_list <- list()
+# k=1
+# 
+# for(i in 1:length(sprints_vector)) {
+#   current_sprint <- paste0(sprints_vector[i])
+#   current_issue_cell <- sqldf(paste0("select * from filtered_issues_table where sprint = '",current_sprint,"'"))
+#   cell_contents_separated <-  unlist(strsplit(as.character(current_issue_cell$keys), split = "\\s+"))
+#   for(j in 1:length(cell_contents_separated)){
+#     current_task <- paste0(cell_contents_separated[j])
+#     developer_cells <- changelog[changelog$project=="xd",]
+#      developer_cells <- developer_cells[developer_cells$field=="assignee",]
+#      developer_cells <- sqldf(paste0("select * from developer_cells where key = '",current_task,"'"))
+#      developers <- nrow(developer_cells)
+#      line <- paste( "xd",sprints_vector[i],current_task,developers, sep = " ___ ")
+#     values_list[[k]] <- line
+#      k=k+1
+#   }
+# }
+
+
+
+```
+
+
+```{r}
+xd_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_xd_df2_keys.csv")
+apstud_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_apstud_df_keys.csv")
+mesos1_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_mesos_1_keys.csv")
+mesos2_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_mesos_2_keys.csv")
+dnn1_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_dnn_df_p2_group1_keys.csv")
+dnn3_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_dnn_df_p2_group3_keys.csv")
+dnn4_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_dnn_df_p2_group4_keys.csv")
+nexus_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_nexus_df_keys.csv")
+tistud_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_tistud_df_keys.csv")
+
+xd_issues<- select(xd_issues,sprint, keys)
+apstud_issues<- select(apstud_issues,sprint, keys)
+mesos1_issues<- select(mesos1_issues,sprint, keys)
+mesos2_issues<- select(mesos2_issues,sprint, keys)
+dnn1_issues<- select(dnn1_issues,sprint, keys)
+dnn3_issues<- select(dnn3_issues,sprint, keys)
+dnn4_issues<- select(dnn4_issues,sprint, keys)
+nexus_issues<- select(nexus_issues,sprint, keys)
+tistud_issues<- select(tistud_issues,sprint, keys)
+
+bugtypes <- function (original_df){
+sprints = sqldf(paste0("select sprint from ", original_df))
+sprints_vector <- unlist(sprints, use.names=TRUE)
+values_list <- list()
+k=1
+
+for(i in 1:length(sprints_vector)) {
+  current_sprint <- paste0(sprints_vector[i])
+  current_issue_cell <- sqldf(paste0("select distinct * from ",original_df," where sprint = '",current_sprint,"'"))
+  
+  
+  cell_contents_separated <-  data.frame(matrix(unlist(strsplit(as.character(current_issue_cell$keys), split = "\\s+")), byrow = T))
+  colnames(cell_contents_separated)[1] <- "key"
+  joined <- sqldf("select * from cell_contents_separated left join filtered_issues_table using (key) ")
+  blocker <- sum(joined$fields.priority.name=="Blocker")
+  Critical <- sum(joined$fields.priority.name=="Critical")
+  High <- sum(joined$fields.priority.name=="High")
+  Low <- sum(joined$fields.priority.name=="Low")
+  Major <- sum(joined$fields.priority.name=="Major")
+  Medium <- sum(joined$fields.priority.name=="Medium")
+  Minor <- sum(joined$fields.priority.name=="Minor")
+  None <- sum(joined$fields.priority.name=="None")
+  ToBeReviewed <- sum(joined$fields.priority.name=="To be Reviewed")
+  Trivial <- sum(joined$fields.priority.name=="Trivial")
+   line <- paste(sprints_vector[i],blocker, Critical, High, Low, Major, Medium, Minor, None, ToBeReviewed, Trivial, sep = " ___ ")
+    values_list[[k]] <- line
+    k=k+1
+  
+}
+
+count_table2 <- data.frame(matrix(unlist(values_list), byrow=T))
+ count_table3 <- separate(count_table2, col = matrix.unlist.values_list...byrow...T., into = c("Sprint" ,"Blocker","Critical","High","Low","Major","Medium","Minor","None","To be Reviewed","Trivial"), sep = " ___ ")
+ return (count_table3)
+# #add to new table
+# final_count_table_timob <- count_table3
+}
+
+ xd_count <- bugtypes("xd_issues")
+ apstud_count <- bugtypes("apstud_issues")
+mesos1_count <- bugtypes("mesos1_issues")
+mesos2_count <- bugtypes("mesos2_issues")
+dnn1_count <- bugtypes("dnn1_issues")
+dnn3_count <- bugtypes("dnn3_issues")
+dnn4_count <- bugtypes("dnn4_issues")
+nexus_count <- bugtypes("nexus_issues")
+tistud_count <- bugtypes("tistud_issues")
+
+write.csv(xd_count, file = "../jiradataset2/newData/metrics/bugTypes/xd_bugs.csv")
+write.csv(apstud_count, file = "../jiradataset2/newData/metrics/bugTypes/apstud_bugs.csv")
+write.csv(mesos1_count, file = "../jiradataset2/newData/metrics/bugTypes/mesos1_bugs.csv")
+write.csv(mesos2_count, file = "../jiradataset2/newData/metrics/bugTypes/mesos2_bugs.csv")
+write.csv(dnn1_count, file = "../jiradataset2/newData/metrics/bugTypes/dnn1_bugs.csv")
+write.csv(dnn3_count, file = "../jiradataset2/newData/metrics/bugTypes/dnn3_bugs.csv")
+write.csv(dnn4_count, file = "../jiradataset2/newData/metrics/bugTypes/dnn4_bugs.csv")
+write.csv(nexus_count, file = "../jiradataset2/newData/metrics/bugTypes/nexus_bugs.csv")
+write.csv(tistud_count, file = "../jiradataset2/newData/metrics/bugTypes/tistud_bugs.csv")
+
+
+```
+
+```{r}
+issues_copy_1 <- issues
+
+#Filtering projects with blank sprints
+filtered_issues_table <- issues_copy_1 %>% select(key, fields.priority.name, storypoints, project, sprint)
+filtered_issues_table = filtered_issues_table[!(filtered_issues_table$sprint ==""), ]
+```
+
+```{r}
+xd_issues <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/metrics_xd_df2_keys.csv", stringsAsFactors = FALSE)
+
+filter_fun <- function(df){
+xd_issues <- select(df,sprint, keys)
+return()
+}
+bugtypes <- function (original_df){
+sprints = sqldf(paste0("select sprint from ", original_df))
+sprints_vector <- unlist(sprints, use.names=TRUE)
+values_list <- list()
+k=1
+
+ for(i in 1:length(sprints_vector)) {
+ current_sprint <- paste0(sprints_vector[i])
+ #current_issue_cell <- select(original_df, sprint, keys)
+   current_issue_cell <- sqldf(paste0("select * from ",original_df," where sprint = '",current_sprint,"'"))
+   
+   cell_contents_separated <-  data.frame(matrix(unlist(strsplit(as.character(current_issue_cell$keys), split = "\\s+")), byrow = T))
+  colnames(cell_contents_separated)[1] <- "key"
+  joined <- sqldf("select * from cell_contents_separated left join filtered_issues_table using (key) ")
+  blocker <- sum(joined$fields.priority.name=="Blocker")
+  Critical <- sum(joined$fields.priority.name=="Critical")
+  High <- sum(joined$fields.priority.name=="High")
+  Low <- sum(joined$fields.priority.name=="Low")
+  Major <- sum(joined$fields.priority.name=="Major")
+  Medium <- sum(joined$fields.priority.name=="Medium")
+  Minor <- sum(joined$fields.priority.name=="Minor")
+  None <- sum(joined$fields.priority.name=="None")
+  ToBeReviewed <- sum(joined$fields.priority.name=="To be Reviewed")
+  Trivial <- sum(joined$fields.priority.name=="Trivial")
+   line <- paste(sprints_vector[i],blocker, Critical, High, Low, Major, Medium, Minor, None, ToBeReviewed, Trivial, sep = " ___ ")
+    values_list[[k]] <- line
+    k=k+1
+}
+
+count_table2 <- data.frame(matrix(unlist(values_list), byrow=T))
+ count_table3 <- separate(count_table2, col = matrix.unlist.values_list...byrow...T., into = c("Sprint" ,"Blocker","Critical","High","Low","Major","Medium","Minor","None","To be Reviewed","Trivial"), sep = " ___ ")
+ return (count_table3)
+#add to new table
+final_count_table_timob <- count_table3
+ }
+
+
+ff <- bugtypes("xd_issues")
+#typeof(xd_issues)
+```
+```{r}
+# install.packages("Hmisc") # Only run on first use
+library(Hmisc)
+nexus_values <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/correlation copy/metrics_nexus_df_keys.csv", stringsAsFactors=FALSE)
+ ccs <- as.matrix(xd_values)
+ correlation <- rcorr(ccs, type="spearman") # You can also use "spearman"
+
+```
+
+```{r}
+nexus_values <- read.csv(file = "../jiradataset2/newData/metrics/metrics with keys/correlation copy/metrics_nexus_df_keys.csv", stringsAsFactors=FALSE)
+library(corrplot)
+library(RColorBrewer)
+M <-cor(nexus_values)
+# png(file="./corr.png", res=300, width=4500, height=4500)
+# corrplot(M,title = "Correlation Plot", method = "square", outline = T, addgrid.col = "darkgray", order="hclust", mar = c(4,2,4,9), addrect = 4, rect.col = "black", rect.lwd = 1,cl.pos = "b", tl.col = "indianred4", tl.cex = 1, cl.cex = 1)
+# dev.off()
+```
+
+```{r}
+nexusCorr <- read.csv(file = "../jiradataset2/nexusCorr.csv", stringsAsFactors=FALSE)
+library(corrplot)
+library(RColorBrewer)
+png(file="./corrnexus2.png", res=300, width=4500, height=4500)
+corrplot(nexusCorr, method = "color", outline = T, addgrid.col = "darkgray", order="hclust", addrect = 4, rect.col = "black", rect.lwd = 15,cl.pos = "b", tl.col = "indianred4", tl.cex = 1.5, cl.cex = 1.5, addCoef.col = "white", number.digits = 2, number.cex = 1, col = colorRampPalette(c("darkred","white","midnightblue"))(100))
+dev.off()
+```
+
